@@ -6,8 +6,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run build && bun run src/cli/index.ts",
+    "dev": "bun run build:dev && bun run src/cli/index.ts",
     "build": "bun build src/cli/index.ts --target node --outfile dist/cli.js && bun build src/frontend/app.ts --target browser --outfile dist/app.bundle.js",
+    "build:dev": "bun build src/cli/index.ts --target node --outfile dist/cli.js && bun build src/frontend/app.ts --target browser --outfile dist/app.bundle.js --sourcemap=inline",
     "build:frontend": "bun build src/frontend/app.ts --target browser --outfile dist/app.bundle.js"
   },
   "bin": {
