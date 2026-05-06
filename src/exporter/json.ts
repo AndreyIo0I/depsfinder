@@ -25,8 +25,11 @@ export async function exportGraph(graph: Graph, outputFile: string, baseDir?: st
   // Преобразуем абсолютные пути в относительные
   const graphWithRelativePaths = convertToRelativePaths(graph, baseDir || process.cwd());
   
+  // Сортируем узлы и рёбра для стабильного порядка
+  const sortedGraph = sortGraph(graphWithRelativePaths);
+  
   // Сериализуем граф в JSON
-  const jsonContent = JSON.stringify(graphWithRelativePaths, (key, value) => {
+  const jsonContent = JSON.stringify(sortedGraph, (key, value) => {
     // Специальная обработка Date объектов
     if (value instanceof Date) {
       return value.toISOString();
@@ -91,6 +94,17 @@ function convertToRelativePaths(graph: Graph, baseDir: string): Graph {
       
       return newEdge;
     })
+  };
+}
+
+/**
+ * Сортирует узлы и рёбра для стабильного порядка в JSON
+ */
+function sortGraph(graph: Graph): Graph {
+  return {
+    ...graph,
+    nodes: [...graph.nodes].sort((a, b) => a.id.localeCompare(b.id)),
+    edges: [...graph.edges].sort((a, b) => a.id.localeCompare(b.id))
   };
 }
 

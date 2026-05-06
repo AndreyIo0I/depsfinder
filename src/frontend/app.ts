@@ -73,7 +73,8 @@ function initializeCytoscape(): void {
       numIter: 1000,
       initialTemp: 200,
       coolingFactor: 0.95,
-      minTemp: 1.0
+      minTemp: 1.0,
+      randomize: false
     },
     
     style: [
