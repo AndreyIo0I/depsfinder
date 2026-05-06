@@ -18,6 +18,8 @@ let filterState: FilterState = {
   showPackageNodes: true,
   selectedPackages: []
 };
+let hiddenNodes: Set<string> = new Set();
+let hiddenEdges: Set<string> = new Set();
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', async () => {
@@ -115,7 +117,33 @@ function initializeCytoscape(): void {
         }
       },
       
-      // Import edges
+      // Import edges - outgoing (source to target)
+      {
+        selector: 'edge[type="import"][direction="outgoing"]',
+        style: {
+          'line-color': '#0d6efd',
+          'target-arrow-color': '#0d6efd',
+          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier',
+          'width': 2,
+          'arrow-scale': 1.5
+        }
+      },
+      
+      // Import edges - incoming (target from source)
+      {
+        selector: 'edge[type="import"][direction="incoming"]',
+        style: {
+          'line-color': '#dc3545',
+          'target-arrow-color': '#dc3545',
+          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier',
+          'width': 2,
+          'arrow-scale': 1.5
+        }
+      },
+      
+      // Default import edges (no direction specified)
       {
         selector: 'edge[type="import"]',
         style: {
@@ -197,7 +225,8 @@ function convertToCytoscapeElements(graph: Graph): any[] {
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: edge.type
+        type: edge.type,
+        direction: 'outgoing' // Default direction from source to target
       }
     });
   }
@@ -268,6 +297,29 @@ function setupCytoscapeEvents(): void {
   cy.on('tap', (event: any) => {
     if (event.target === cy) {
       hideNodeDetails();
+    }
+  });
+  
+  // Delete key - hide selected nodes
+  document.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (event.key === 'Delete') {
+      const selectedNodes = cy?.elements(':selected').nodes();
+      if (selectedNodes && selectedNodes.length > 0) {
+        selectedNodes.forEach((node: any) => {
+          const nodeId = node.data('id');
+          hiddenNodes.add(nodeId);
+          node.style('display', 'none');
+          
+          // Hide connected edges
+          const connectedEdges = node.connectedEdges();
+          connectedEdges.forEach((edge: any) => {
+            const edgeId = edge.data('id');
+            hiddenEdges.add(edgeId);
+            edge.style('display', 'none');
+          });
+        });
+        updateRestoreButton();
+      }
     }
   });
 }
@@ -579,5 +631,39 @@ function showError(message: string): void {
       link.href = pngBase64;
       link.click();
     }
+  },
+  restoreHiddenNodes: () => {
+    hiddenNodes.clear();
+    hiddenEdges.clear();
+    if (cy) {
+      cy.elements().style('display', 'element');
+    }
+    updateRestoreButton();
   }
 };
+
+/**
+ * Updates the restore button visibility based on hidden nodes
+ */
+function updateRestoreButton(): void {
+  const restoreBtn = document.getElementById('restoreBtn');
+  if (!restoreBtn) return;
+  
+  if (hiddenNodes.size > 0) {
+    restoreBtn.classList.remove('hidden');
+  } else {
+    restoreBtn.classList.add('hidden');
+  }
+}
+
+/**
+ * Restores all hidden nodes and edges
+ */
+function restoreHiddenNodes(): void {
+  hiddenNodes.clear();
+  hiddenEdges.clear();
+  if (cy) {
+    cy.elements().style('display', 'element');
+  }
+  updateRestoreButton();
+}
