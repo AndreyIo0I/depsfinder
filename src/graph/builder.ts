@@ -4,15 +4,13 @@
  * Related specs: openspec/specs/types.md, openspec/changes/ts-dep-implementation/design.md
  */
 
-import { statSync } from 'fs';
 import type { 
   Graph, 
   Node, 
   Edge, 
   GraphMetadata, 
   PackageInfo, 
-  AnalyzedFile,
-  FileMetadata
+  AnalyzedFile
 } from '../types/global.ts';
 import { NodeType, EdgeType } from '../types/global.ts';
 import { resolveImports } from '../analyzer/resolver.ts';
@@ -61,14 +59,7 @@ function createPackageNode(pkg: PackageInfo): Node {
     id: `pkg:${pkg.id}`,
     type: NodeType.PACKAGE,
     label: pkg.name,
-    packageId: pkg.id,
-    metadata: {
-      size: 0,
-      importsCount: 0,
-      exportsCount: 0,
-      linesOfCode: 0,
-      extension: ''
-    }
+    packageId: pkg.id
   };
 }
 
@@ -77,29 +68,13 @@ function createPackageNode(pkg: PackageInfo): Node {
  */
 function createFileNode(file: AnalyzedFile): Node {
   const fileName = file.filePath.split('/').pop() || file.filePath;
-  const extension = fileName.split('.').pop() || '';
-  
-  let fileSize = 0;
-  try {
-    const stats = statSync(file.filePath);
-    fileSize = stats.size;
-  } catch (error) {
-    // Silent skip
-  }
   
   return {
     id: `file:${file.filePath}`,
     type: NodeType.FILE,
     label: fileName,
     packageId: file.packageName,
-    filePath: file.filePath,
-    metadata: {
-      size: fileSize,
-      importsCount: file.imports.length,
-      exportsCount: file.exports.length,
-      linesOfCode: 0, // Можно добавить подсчёт строк
-      extension
-    }
+    filePath: file.filePath
   };
 }
 

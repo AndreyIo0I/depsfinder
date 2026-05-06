@@ -70,7 +70,6 @@ export interface Node {
   label: string;
   packageId: string;
   filePath?: string;
-  metadata: FileMetadata;
 }
 
 export interface Edge {

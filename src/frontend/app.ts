@@ -21,6 +21,7 @@ let filterState: FilterState = {
 let hiddenNodes: Set<string> = new Set();
 let hiddenEdges: Set<string> = new Set();
 let selectedNodeId: string | null = null;
+let collapsedPackages: Set<string> = new Set();
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', async () => {
@@ -81,26 +82,30 @@ function initializeCytoscape(): void {
     },
     
     style: [
-      // Package nodes
+      // Package nodes (compound nodes/frames)
       {
         selector: 'node[type="package"]',
         style: {
           'background-color': getNodeColor,
           'label': 'data(label)',
-          'text-valign': 'center',
+          'text-valign': 'top',
           'text-halign': 'center',
           'color': '#ffffff',
           'text-outline-width': 2,
           'text-outline-color': '#000000',
-          'width': 80,
-          'height': 80,
-          'shape': 'ellipse',
-          'font-size': '12px',
-          'font-weight': 'bold'
+          'width': 200,
+          'height': 150,
+          'shape': 'round-rectangle',
+          'font-size': '14px',
+          'font-weight': 'bold',
+          'border-width': 3,
+          'border-color': '#333',
+          'padding': 30,
+          'compound-sizing-wrt-labels': false
         }
       },
       
-      // File nodes
+      // File nodes inside packages
       {
         selector: 'node[type="file"]',
         style: {
@@ -187,7 +192,11 @@ function initializeCytoscape(): void {
     
     wheelSensitivity: 0.3,
     boxSelectionEnabled: true,
-    selectionType: 'single'
+    selectionType: 'single',
+    layout: {
+      name: 'preset',
+      animate: false
+    }
   });
 
   // Setup event handlers
@@ -201,20 +210,36 @@ function initializeCytoscape(): void {
 }
 
 /**
- * Converts graph data to Cytoscape elements format
+ * Converts graph data to Cytoscape elements format with compound nodes for packages
  */
 function convertToCytoscapeElements(graph: Graph): any[] {
   const elements: any[] = [];
   
-  // Add nodes
-  for (const node of graph.nodes) {
+  // First, add package nodes (these will be compound nodes/frames)
+  const packageNodes = graph.nodes.filter(n => n.type === 'package');
+  for (const node of packageNodes) {
     elements.push({
       data: {
         id: node.id,
         label: node.label,
         type: node.type,
         packageId: node.packageId,
-        filePath: node.filePath
+        parent: null // Package nodes have no parent
+      }
+    });
+  }
+  
+  // Then, add file nodes inside their package parent
+  const fileNodes = graph.nodes.filter(n => n.type === 'file');
+  for (const node of fileNodes) {
+    elements.push({
+      data: {
+        id: node.id,
+        label: node.label,
+        type: node.type,
+        packageId: node.packageId,
+        filePath: node.filePath,
+        parent: node.packageId // File nodes are children of their package
       }
     });
   }
@@ -285,8 +310,22 @@ function setupCytoscapeEvents(): void {
     console.log('Edge selected:', edge.data());
   });
   
-  // Double click node - open file
-  cy.on('dblclick', 'node', (event: any) => {
+  // Double click package node - collapse/expand
+  cy.on('dblclick', 'node[type="package"]', (event: any) => {
+    const node = event.target;
+    const packageId = node.data('id');
+    
+    if (collapsedPackages.has(packageId)) {
+      // Expand the package
+      expandPackage(packageId);
+    } else {
+      // Collapse the package
+      collapsePackage(packageId);
+    }
+  });
+  
+  // Double click file node - open file
+  cy.on('dblclick', 'node[type="file"]', (event: any) => {
     const node = event.target;
     const filePath = node.data('filePath');
     
@@ -736,4 +775,75 @@ function restoreHiddenNodes(): void {
     cy.elements().style('display', 'element');
   }
   updateRestoreButton();
+}
+
+/**
+ * Collapses a package node - hides child file nodes and shows package as a single node
+ * Preserves all incoming and outgoing edges at the package level
+ */
+function collapsePackage(packageId: string): void {
+  if (!cy) return;
+  
+  collapsedPackages.add(packageId);
+  
+  // Get the package node
+  const packageNode = cy.getElementById(packageId);
+  
+  // Get all file nodes inside this package
+  const childNodes = cy.nodes().filter((node: any) => node.data('parent') === packageId);
+  
+  // Hide all child file nodes
+  childNodes.forEach((node: any) => {
+    node.style('display', 'none');
+  });
+  
+  // Update package node style to show it's collapsed
+  packageNode.style({
+    'background-opacity': 0.5,
+    'border-style': 'dashed'
+  });
+  
+  // Reposition package node to average position of its children
+  if (childNodes.length > 0) {
+    let sumX = 0, sumY = 0, count = 0;
+    childNodes.forEach((node: any) => {
+      const pos = node.position();
+      sumX += pos.x;
+      sumY += pos.y;
+      count++;
+    });
+    
+    if (count > 0) {
+      packageNode.position({
+        x: sumX / count,
+        y: sumY / count
+      });
+    }
+  }
+}
+
+/**
+ * Expands a package node - shows all child file nodes
+ */
+function expandPackage(packageId: string): void {
+  if (!cy) return;
+  
+  collapsedPackages.delete(packageId);
+  
+  // Get the package node
+  const packageNode = cy.getElementById(packageId);
+  
+  // Get all file nodes inside this package
+  const childNodes = cy.nodes().filter((node: any) => node.data('parent') === packageId);
+  
+  // Show all child file nodes
+  childNodes.forEach((node: any) => {
+    node.style('display', 'element');
+  });
+  
+  // Reset package node style
+  packageNode.style({
+    'background-opacity': 1,
+    'border-style': 'solid'
+  });
 }
