@@ -64,17 +64,29 @@ function convertToRelativePaths(graph: Graph, baseDir: string): Graph {
     edges: graph.edges.map(edge => {
       const newEdge = { ...edge };
       
-      // Преобразуем source и target если они file узлы
+      // Преобразуем source если это file узел
       if (newEdge.source.startsWith('file:')) {
         const absolutePath = edge.source.substring(5);
         const relativePath = relative(baseDir, absolutePath);
         newEdge.source = `file:${relativePath}`;
       }
       
+      // Преобразуем target если это file узел
       if (newEdge.target.startsWith('file:')) {
         const absolutePath = edge.target.substring(5);
         const relativePath = relative(baseDir, absolutePath);
         newEdge.target = `file:${relativePath}`;
+      }
+      
+      // Также нужно обновить id ребра если он содержит пути
+      if (newEdge.id.includes('file:')) {
+        // Заменяем все вхождения file:... на relative paths
+        // Паттерн: file: за которым следует путь до пробела, : или конца строки
+        newEdge.id = newEdge.id.replace(/file:[^\s:>]+/g, (match) => {
+          const absolutePath = match.substring(5);
+          const relativePath = relative(baseDir, absolutePath);
+          return `file:${relativePath}`;
+        });
       }
       
       return newEdge;
