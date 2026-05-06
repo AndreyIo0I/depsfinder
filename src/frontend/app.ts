@@ -428,7 +428,15 @@ function updateStats(): void {
   
   const nodeCount = graphData.nodes.length;
   const edgeCount = graphData.edges.length;
-  const packageCount = graphData.metadata.totalPackages;
+  
+  // Count unique packages from nodes
+  const packages = new Set<string>();
+  for (const node of graphData.nodes) {
+    if (node.package) {
+      packages.add(node.package);
+    }
+  }
+  const packageCount = packages.size;
   
   statsElement.textContent = `${nodeCount} nodes, ${edgeCount} edges, ${packageCount} packages`;
 }
