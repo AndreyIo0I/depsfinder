@@ -20,6 +20,7 @@ let filterState: FilterState = {
 };
 let hiddenNodes: Set<string> = new Set();
 let hiddenEdges: Set<string> = new Set();
+let selectedNodeId: string | null = null;
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', async () => {
@@ -265,7 +266,9 @@ function setupCytoscapeEvents(): void {
   // Node click
   cy.on('tap', 'node', (event: any) => {
     const node = event.target;
+    selectedNodeId = node.data('id');
     showNodeDetails(node);
+    highlightConnectedEdges(node);
     
     // Dispatch custom event
     document.dispatchEvent(new CustomEvent('node-selected', {
@@ -296,7 +299,9 @@ function setupCytoscapeEvents(): void {
   // Background click - clear selection
   cy.on('tap', (event: any) => {
     if (event.target === cy) {
+      selectedNodeId = null;
       hideNodeDetails();
+      clearEdgeHighlights();
     }
   });
   
@@ -355,6 +360,63 @@ function hideNodeDetails(): void {
   if (detailsPanel) {
     detailsPanel.classList.add('hidden');
   }
+}
+
+/**
+ * Highlights connected edges for the selected node
+ * Outgoing edges (from selected node) - blue
+ * Incoming edges (to selected node) - red
+ */
+function highlightConnectedEdges(node: any): void {
+  if (!cy) return;
+  
+  // First, reset all edges to default style
+  cy.edges().forEach((edge: any) => {
+    edge.style({
+      'line-color': '#6c757d',
+      'target-arrow-color': '#6c757d',
+      'width': 2,
+      'opacity': 0.3
+    });
+  });
+  
+  // Get outgoing edges (edges where this node is the source)
+  const outgoingEdges = node.outgoers('edge');
+  outgoingEdges.forEach((edge: any) => {
+    edge.style({
+      'line-color': '#0d6efd',
+      'target-arrow-color': '#0d6efd',
+      'width': 3,
+      'opacity': 1
+    });
+  });
+  
+  // Get incoming edges (edges where this node is the target)
+  const incomingEdges = node.incomers('edge');
+  incomingEdges.forEach((edge: any) => {
+    edge.style({
+      'line-color': '#dc3545',
+      'target-arrow-color': '#dc3545',
+      'width': 3,
+      'opacity': 1
+    });
+  });
+}
+
+/**
+ * Clears edge highlights and resets to default
+ */
+function clearEdgeHighlights(): void {
+  if (!cy) return;
+  
+  cy.edges().forEach((edge: any) => {
+    edge.style({
+      'line-color': '#6c757d',
+      'target-arrow-color': '#6c757d',
+      'width': 2,
+      'opacity': 1
+    });
+  });
 }
 
 /**
