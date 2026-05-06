@@ -104,7 +104,7 @@
       "packageId": "ts-dep",
       "filePath": "src/server/index.ts",
       "metadata": {
-        "size": 5898,
+        "size": 5877,
         "importsCount": 5,
         "exportsCount": 2,
         "linesOfCode": 0,
@@ -374,10 +374,10 @@
     }
   ],
   "metadata": {
-    "createdAt": "2026-05-06T12:14:56.869Z",
+    "createdAt": "2026-05-06T12:31:12.466Z",
     "totalFiles": 9,
     "totalPackages": 1,
     "totalDependencies": 33,
-    "scanDurationMs": 1
+    "scanDurationMs": 15
   }
 }

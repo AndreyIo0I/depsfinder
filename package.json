@@ -7,7 +7,8 @@
   "private": true,
   "scripts": {
     "dev": "bun run src/cli/index.ts",
-    "build": "bun build src/cli/index.ts --target node --outfile dist/cli.js"
+    "build": "bun build src/cli/index.ts --target node --outfile dist/cli.js && bun build src/frontend/app.ts --target browser --outfile dist/app.bundle.js",
+    "build:frontend": "bun build src/frontend/app.ts --target browser --outfile dist/app.bundle.js"
   },
   "bin": {
     "ts-dep": "./dist/cli.js"
