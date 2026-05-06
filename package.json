@@ -6,8 +6,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run src/cli/index.ts",
-    "build": "bun build src/cli/index.ts --target node --outfile dist/cli.js"
+    "dev": "bun run build && bun run src/cli/index.ts",
+    "build": "bun build src/cli/index.ts --target node --outfile dist/cli.js && bun build src/frontend/app.ts --target browser --outfile dist/app.bundle.js",
+    "build:frontend": "bun build src/frontend/app.ts --target browser --outfile dist/app.bundle.js"
   },
   "bin": {
     "ts-dep": "./dist/cli.js"
@@ -23,6 +24,7 @@
     "@fission-ai/openspec": "^1.3.1",
     "@types/node": "^25.6.0",
     "commander": "^14.0.3",
-    "cytoscape": "^3.33.3"
+    "cytoscape": "^3.33.3",
+    "open": "^11.0.0"
   }
 }

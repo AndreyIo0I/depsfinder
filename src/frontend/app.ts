@@ -5,9 +5,7 @@
  */
 
 import type { Graph, Node, Edge, NodeType, FilterState } from '../types/global.ts';
-
-// Declare cytoscape as global since it's loaded via CDN
-declare const cytoscape: any;
+import cytoscape from 'cytoscape';
 
 // Global state
 let cy: any = null;

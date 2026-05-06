@@ -66,12 +66,12 @@ program
       
       // Export graph
       console.log('[INFO] Exporting graph...');
-      await exportGraph(graph, config.outputFile);
+      await exportGraph(graph, config.outputFile, config.projectRoot);
       console.log(`[INFO] Graph exported to ${config.outputFile}`);
       
       // Start server
       console.log(`[INFO] Starting HTTP server on port ${config.port}...`);
-      await startServer(config.port, graph);
+      await startServer(config.port, graph, config.openBrowser, config.projectRoot);
       
       if (config.openBrowser) {
         console.log('[INFO] Opening browser...');

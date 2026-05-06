@@ -9,7 +9,8 @@ import { join, resolve } from 'path';
 import type { TsDepConfig, PackageInfo, ScannerResult, SkippedPath } from '../types/global.ts';
 
 /**
- * Сканирует NX монорепозиторий и находит все пакеты в директории packages/
+ * Сканирует проект и находит все пакеты/модули
+ * Если packagesDir не содержит поддиректорий с package.json, сканирует напрямую файлы
  */
 export async function scanNxPackages(config: TsDepConfig): Promise<ScannerResult> {
   const packages: PackageInfo[] = [];
@@ -18,14 +19,43 @@ export async function scanNxPackages(config: TsDepConfig): Promise<ScannerResult
   const projectRoot = resolve(config.projectRoot);
   const packagesDir = join(projectRoot, config.packagesDir);
   
-  // Проверяем существование директории packages
+  // Проверяем существование директории
   if (!existsSync(packagesDir)) {
     console.log(`[WARN] Packages directory not found: ${packagesDir}`);
     return { packages, skippedPaths };
   }
   
-  // Читаем содержимое директории packages
-  const packageDirs = readdirSync(packagesDir, { withFileTypes: true })
+  // Читаем содержимое директории
+  const entries = readdirSync(packagesDir, { withFileTypes: true });
+  const hasSubdirs = entries.some(e => e.isDirectory());
+  
+  // Если это плоская структура (как src/), обрабатываем напрямую
+  if (!hasSubdirs || config.packagesDir === 'src') {
+    const files = findTypeScriptFiles(packagesDir, config.excludePaths);
+    const packageJsonPath = join(projectRoot, 'package.json');
+    
+    let packageName = 'project';
+    if (existsSync(packageJsonPath)) {
+      try {
+        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+        packageName = packageJson.name || 'project';
+      } catch {}
+    }
+    
+    if (files.length > 0) {
+      packages.push({
+        id: packageName,
+        name: packageName,
+        path: packagesDir,
+        files
+      });
+    }
+    
+    return { packages, skippedPaths };
+  }
+  
+  // Для NX-структуры с поддиректориями
+  const packageDirs = entries
     .filter(dirent => dirent.isDirectory())
     .map(dirent => dirent.name);
   
