@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TS Dependency Graph</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.33.3/cytoscape.min.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <h1>TS Dependency Graph</h1>
+    <div class="header-controls">
+      <button id="filtersBtn" class="btn">Filters</button>
+      <div id="stats" class="stats">Loading...</div>
+      <button id="refreshBtn" class="btn">Refresh</button>
+      <button id="helpBtn" class="btn">Help</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <!-- Search -->
+      <div class="sidebar-section">
+        <h3>Search</h3>
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search nodes...">
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="sidebar-section">
+        <h3>Filters</h3>
+        
+        <div class="filter-group">
+          <label>Node Types:</label>
+          <div class="checkbox-group">
+            <label>
+              <input type="checkbox" id="showFileNodes" checked>
+              Show File Nodes
+            </label>
+            <label>
+              <input type="checkbox" id="showPackageNodes" checked>
+              Show Package Nodes
+            </label>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="minDepth">Min Depth: <span id="minDepthValue">0</span></label>
+          <input type="range" id="minDepth" min="0" max="10" value="0">
+        </div>
+
+        <div class="filter-group">
+          <label for="maxDepth">Max Depth: <span id="maxDepthValue">100</span></label>
+          <input type="range" id="maxDepth" min="0" max="100" value="100">
+        </div>
+
+        <div class="filter-group">
+          <label>Packages:</label>
+          <div id="packageList" class="package-list">
+            <!-- Package checkboxes will be added here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Node Details -->
+      <div id="nodeDetails" class="sidebar-section hidden">
+        <h3>Node Details</h3>
+        <div id="nodeDetailsContent">
+          <!-- Details will be shown here -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Canvas -->
+    <main class="canvas-container">
+      <div id="cy"></div>
+      
+      <!-- Loading Overlay -->
+      <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Building dependency graph...</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Keyboard Shortcuts</h2>
+      <ul>
+        <li><kbd>Ctrl+F</kbd> / <kbd>Cmd+F</kbd> - Focus search</li>
+        <li><kbd>Esc</kbd> - Clear selection</li>
+        <li><kbd>Ctrl++</kbd> / <kbd>Ctrl+-</kbd> - Zoom in/out</li>
+        <li><kbd>Space</kbd> - Toggle filters sidebar</li>
+        <li><kbd>R</kbd> - Refresh graph</li>
+        <li><kbd>H</kbd> - Show help</li>
+      </ul>
+      <h3>Mouse Controls</h3>
+      <ul>
+        <li><strong>Click</strong> on node - Select and show details</li>
+        <li><strong>Double-click</strong> on node - Open source file</li>
+        <li><strong>Right-click</strong> - Context menu</li>
+        <li><strong>Scroll</strong> - Zoom in/out</li>
+        <li><strong>Drag canvas</strong> - Pan</li>
+      </ul>
+      <button id="closeHelpBtn" class="btn">Close</button>
+    </div>
+  </div>
+
+  <script type="module" src="/app.ts"></script>
+</body>
+</html>
