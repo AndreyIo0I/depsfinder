@@ -4,7 +4,7 @@
  * Related specs: openspec/specs/architecture.md, openspec/changes/ts-dep-implementation/design.md
  */
 
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, watch } from 'fs';
 import { join, dirname, resolve, relative } from 'path';
 import open from 'open';
 import type { Graph, Node } from '../types/global.ts';
@@ -12,6 +12,7 @@ import { graphToJson } from '../exporter/json.ts';
 
 // Пути к файлам фронтенда
 const FRONTEND_DIR = join(dirname(import.meta.path), '..', 'frontend');
+const BASE_DIR = process.cwd();
 
 /**
  * Преобразует относительные пути в графе обратно в абсолютные
@@ -64,8 +65,32 @@ function convertToAbsolutePaths(graph: Graph, baseDir: string): Graph {
 export async function startServer(port: number, graph: Graph, openBrowser = true, baseDir?: string): Promise<any> {
   // Преобразуем граф с относительными путями обратно в абсолютные для frontend
   const graphWithAbsolutePaths = convertToAbsolutePaths(graph, baseDir || process.cwd());
-  const jsonContent = graphToJson(graphWithAbsolutePaths);
   
+  // Функция для генерации JSON графа
+  const getGraphJson = () => graphToJson(convertToAbsolutePaths(graph, baseDir || process.cwd()));
+  
+  // Переменная для хранения текущего JSON
+  let jsonContent = getGraphJson();
+
+  // Настройка hot reload для графа
+  const graphJsonPath = join(BASE_DIR, 'graph.json');
+  let graphWatcher: ReturnType<typeof watch> | null = null;
+  
+  if (existsSync(graphJsonPath)) {
+    graphWatcher = watch(graphJsonPath, (eventType) => {
+      if (eventType === 'change') {
+        try {
+          jsonContent = readFileSync(graphJsonPath, 'utf-8');
+          console.log('[INFO] Graph data reloaded');
+        } catch (err) {
+          console.error('[ERROR] Failed to reload graph:', err);
+        }
+      }
+    });
+    // Начальная загрузка из файла
+    jsonContent = readFileSync(graphJsonPath, 'utf-8');
+  }
+
   const server = Bun.serve({
     port,
     fetch(req) {
@@ -82,7 +107,7 @@ export async function startServer(port: number, graph: Graph, openBrowser = true
       }
       
       if (pathname === '/app.js' || pathname === '/app.ts') {
-        return serveFile('app.ts', 'application/typescript');
+        return serveTypeScript('app.ts');
       }
       
       // Обработка запроса на bundled app.js с cytoscape
@@ -120,10 +145,12 @@ export async function startServer(port: number, graph: Graph, openBrowser = true
       
       // 404
       return new Response('Not Found', { status: 404 });
-    }
+    },
+    development: true
   });
   
   console.log(`[INFO] Server running at http://localhost:${port}`);
+  console.log('[INFO] Hot reload enabled for TypeScript files');
   
   // Открываем браузер только если флаг установлен
   if (openBrowser) {
@@ -134,7 +161,10 @@ export async function startServer(port: number, graph: Graph, openBrowser = true
     }, 500);
   }
   
-  return server;
+  return { server, stop: () => {
+    if (graphWatcher) graphWatcher.close();
+    server.stop();
+  }};
 }
 
 /**
@@ -160,6 +190,56 @@ function serveFile(filename: string, contentType: string): Response {
     });
   } catch (error) {
     return new Response(`Error reading file: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  }
+}
+
+/**
+ * Обслуживает TypeScript файл с компиляцией и sourcemaps
+ */
+function serveTypeScript(filename: string): Response {
+  const filePath = join(FRONTEND_DIR, filename);
+  
+  if (!existsSync(filePath)) {
+    return new Response(`File not found: ${filename}`, { 
+      status: 404,
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  }
+  
+  try {
+    // Используем Bun для транспиляции TypeScript в JavaScript с sourcemaps
+    const code = readFileSync(filePath, 'utf-8');
+    const result = Bun.build({
+      entrypoints: [filePath],
+      target: 'browser',
+      sourcemap: 'inline',
+      minify: false
+    });
+    
+    // Получаем результат сборки
+    const outputs = result.outputs;
+    if (outputs && outputs.length > 0) {
+      const jsOutput = outputs.find((o: any) => o.path.endsWith('.js')) || outputs[0];
+      return new Response(jsOutput.text(), {
+        headers: {
+          'Content-Type': 'application/javascript',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
+    // Fallback: просто возвращаем код
+    return new Response(code, {
+      headers: {
+        'Content-Type': 'application/typescript',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  } catch (error) {
+    return new Response(`Error compiling TypeScript: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
       status: 500,
       headers: { 'Content-Type': 'text/plain' }
     });
