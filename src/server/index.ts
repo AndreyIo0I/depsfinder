@@ -87,7 +87,7 @@ export async function startServer(port: number, graph: Graph, openBrowser = true
       
       // Обработка запроса на bundled app.js с cytoscape
       if (pathname === '/app.bundle.js') {
-        const bundlePath = join(dirname(import.meta.path), '..', '..', 'dist', 'app.bundle.js');
+        const bundlePath = resolve(process.cwd(), 'dist', 'app.bundle.js');
         if (existsSync(bundlePath)) {
           const bundledCode = readFileSync(bundlePath, 'utf-8');
           return new Response(bundledCode, {
