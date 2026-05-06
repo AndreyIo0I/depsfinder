@@ -48,3 +48,13 @@ CLI-утилита `ts-dep`, которая:
 - Только статические импорты/экспорты
 - Требуется наличие `tsconfig.json` в корне проекта
 - Конфигурация через единственный файл `ts-dep.config.ts`
+
+## 🛠 Стек технологий
+- **Рантайм/Пакетный менеджер:** Bun
+- **Язык:** TypeScript (строгий режим, `.ts` расширения в импортах обязательны)
+- **Документация архитектуры:** OpenSpec (`bun add -g @fission-ai/openspec@latest`)
+- **Парсинг:** TypeScript Compiler API
+- **Визуализация:** Cytoscape.js (`layout: cose`), чистый HTML + JS
+- **CLI:** Commander.js
+- **Сервер:** Встроенный HTTP сервер (Bun native)
+- **Открытие браузера:** Bun native API (`Bun.openInEditor` или `child_process.exec`)
