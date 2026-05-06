@@ -5,19 +5,66 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join, dirname, resolve } from 'path';
+import { join, dirname, resolve, relative } from 'path';
 import open from 'open';
-import type { Graph } from '../types/global.ts';
+import type { Graph, Node } from '../types/global.ts';
 import { graphToJson } from '../exporter/json.ts';
 
 // Пути к файлам фронтенда
 const FRONTEND_DIR = join(dirname(import.meta.path), '..', 'frontend');
 
 /**
+ * Преобразует относительные пути в графе обратно в абсолютные
+ */
+function convertToAbsolutePaths(graph: Graph, baseDir: string): Graph {
+  return {
+    ...graph,
+    nodes: graph.nodes.map(node => {
+      const newNode = { ...node };
+      
+      // Преобразуем filePath из относительного в абсолютный
+      if (newNode.filePath && !newNode.filePath.startsWith('/')) {
+        newNode.filePath = resolve(baseDir, newNode.filePath);
+      }
+      
+      // Преобразуем id для file узлов
+      if (newNode.id.startsWith('file:') && !newNode.id.substring(5).startsWith('/')) {
+        const relativePath = node.id.substring(5);
+        const absolutePath = resolve(baseDir, relativePath);
+        newNode.id = `file:${absolutePath}`;
+      }
+      
+      return newNode;
+    }),
+    edges: graph.edges.map(edge => {
+      const newEdge = { ...edge };
+      
+      // Преобразуем source если это file узел
+      if (newEdge.source.startsWith('file:') && !newEdge.source.substring(5).startsWith('/')) {
+        const relativePath = edge.source.substring(5);
+        const absolutePath = resolve(baseDir, relativePath);
+        newEdge.source = `file:${absolutePath}`;
+      }
+      
+      // Преобразуем target если это file узел
+      if (newEdge.target.startsWith('file:') && !newEdge.target.substring(5).startsWith('/')) {
+        const relativePath = edge.target.substring(5);
+        const absolutePath = resolve(baseDir, relativePath);
+        newEdge.target = `file:${absolutePath}`;
+      }
+      
+      return newEdge;
+    })
+  };
+}
+
+/**
  * Запускает HTTP сервер для обслуживания веб-интерфейса
  */
-export async function startServer(port: number, graph: Graph, openBrowser = true): Promise<any> {
-  const jsonContent = graphToJson(graph);
+export async function startServer(port: number, graph: Graph, openBrowser = true, baseDir?: string): Promise<any> {
+  // Преобразуем граф с относительными путями обратно в абсолютные для frontend
+  const graphWithAbsolutePaths = convertToAbsolutePaths(graph, baseDir || process.cwd());
+  const jsonContent = graphToJson(graphWithAbsolutePaths);
   
   const server = Bun.serve({
     port,
@@ -36,6 +83,25 @@ export async function startServer(port: number, graph: Graph, openBrowser = true
       
       if (pathname === '/app.js' || pathname === '/app.ts') {
         return serveFile('app.ts', 'application/typescript');
+      }
+      
+      // Обработка запроса на bundled app.js с cytoscape
+      if (pathname === '/app.bundle.js') {
+        const bundlePath = join(dirname(import.meta.path), '..', '..', 'dist', 'app.bundle.js');
+        if (existsSync(bundlePath)) {
+          const bundledCode = readFileSync(bundlePath, 'utf-8');
+          return new Response(bundledCode, {
+            headers: {
+              'Content-Type': 'application/javascript',
+              'Access-Control-Allow-Origin': '*'
+            }
+          });
+        } else {
+          return new Response('Bundle not found. Run "bun build" first.', { 
+            status: 404,
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        }
       }
       
       if (pathname === '/graph.json') {

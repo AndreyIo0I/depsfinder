@@ -5,13 +5,13 @@
  */
 
 import { writeFileSync, mkdirSync } from 'fs';
-import { dirname, resolve } from 'path';
-import type { Graph } from '../types/global.ts';
+import { dirname, resolve, relative } from 'path';
+import type { Graph, Node } from '../types/global.ts';
 
 /**
- * Экспортирует граф в JSON файл
+ * Экспортирует граф в JSON файл с относительными путями
  */
-export async function exportGraph(graph: Graph, outputFile: string): Promise<void> {
+export async function exportGraph(graph: Graph, outputFile: string, baseDir?: string): Promise<void> {
   const absolutePath = resolve(outputFile);
   
   // Создаём директории если они не существуют
@@ -22,8 +22,11 @@ export async function exportGraph(graph: Graph, outputFile: string): Promise<voi
     // Директория уже существует или ошибка создания
   }
   
+  // Преобразуем абсолютные пути в относительные
+  const graphWithRelativePaths = convertToRelativePaths(graph, baseDir || process.cwd());
+  
   // Сериализуем граф в JSON
-  const jsonContent = JSON.stringify(graph, (key, value) => {
+  const jsonContent = JSON.stringify(graphWithRelativePaths, (key, value) => {
     // Специальная обработка Date объектов
     if (value instanceof Date) {
       return value.toISOString();
@@ -33,6 +36,50 @@ export async function exportGraph(graph: Graph, outputFile: string): Promise<voi
   
   // Записываем в файл
   writeFileSync(absolutePath, jsonContent, 'utf-8');
+}
+
+/**
+ * Преобразует абсолютные пути в графе в относительные
+ */
+function convertToRelativePaths(graph: Graph, baseDir: string): Graph {
+  return {
+    ...graph,
+    nodes: graph.nodes.map(node => {
+      const newNode = { ...node };
+      
+      // Преобразуем filePath в относительный
+      if (newNode.filePath) {
+        newNode.filePath = relative(baseDir, newNode.filePath);
+      }
+      
+      // Преобразуем id для file узлов (они содержат путь)
+      if (newNode.id.startsWith('file:')) {
+        const absolutePath = node.id.substring(5); // убираем 'file:'
+        const relativePath = relative(baseDir, absolutePath);
+        newNode.id = `file:${relativePath}`;
+      }
+      
+      return newNode;
+    }),
+    edges: graph.edges.map(edge => {
+      const newEdge = { ...edge };
+      
+      // Преобразуем source и target если они file узлы
+      if (newEdge.source.startsWith('file:')) {
+        const absolutePath = edge.source.substring(5);
+        const relativePath = relative(baseDir, absolutePath);
+        newEdge.source = `file:${relativePath}`;
+      }
+      
+      if (newEdge.target.startsWith('file:')) {
+        const absolutePath = edge.target.substring(5);
+        const relativePath = relative(baseDir, absolutePath);
+        newEdge.target = `file:${relativePath}`;
+      }
+      
+      return newEdge;
+    })
+  };
 }
 
 /**
