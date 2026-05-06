@@ -3,23 +3,38 @@
 node_modules/
 .bun/
 
-# Logs and temp files
+# Build artifacts
+dist/
+build/
+target/
+
+# Logs
 *.log
-*.tmp
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Cache directories
-.cache/
-.node-gyp/
-.npm/
-.yarn/
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
 
-# Build outputs
-dist/
-build/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Coverage
 coverage/
+htmlcov/
+.coverage
+
+# System
+.DS_Store
+Thumbs.db
 ```

@@ -1,0 +1,369 @@
+{
+  "nodes": [
+    {
+      "id": "pkg:ts-dep",
+      "type": "package",
+      "label": "ts-dep",
+      "packageId": "ts-dep",
+      "metadata": {
+        "size": 0,
+        "importsCount": 0,
+        "exportsCount": 0,
+        "linesOfCode": 0,
+        "extension": ""
+      }
+    },
+    {
+      "id": "file:/workspace/src/exporter/json.ts",
+      "type": "file",
+      "label": "json.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/exporter/json.ts",
+      "metadata": {
+        "size": 1862,
+        "importsCount": 3,
+        "exportsCount": 3,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    },
+    {
+      "id": "file:/workspace/src/analyzer/parser.ts",
+      "type": "file",
+      "label": "parser.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/analyzer/parser.ts",
+      "metadata": {
+        "size": 9714,
+        "importsCount": 4,
+        "exportsCount": 1,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    },
+    {
+      "id": "file:/workspace/src/analyzer/resolver.ts",
+      "type": "file",
+      "label": "resolver.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/analyzer/resolver.ts",
+      "metadata": {
+        "size": 8930,
+        "importsCount": 3,
+        "exportsCount": 2,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    },
+    {
+      "id": "file:/workspace/src/types/global.ts",
+      "type": "file",
+      "label": "global.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/types/global.ts",
+      "metadata": {
+        "size": 3984,
+        "importsCount": 0,
+        "exportsCount": 2,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    },
+    {
+      "id": "file:/workspace/src/cli/index.ts",
+      "type": "file",
+      "label": "index.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/cli/index.ts",
+      "metadata": {
+        "size": 3636,
+        "importsCount": 8,
+        "exportsCount": 0,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    },
+    {
+      "id": "file:/workspace/src/scanner/nx.ts",
+      "type": "file",
+      "label": "nx.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/scanner/nx.ts",
+      "metadata": {
+        "size": 5012,
+        "importsCount": 3,
+        "exportsCount": 1,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    },
+    {
+      "id": "file:/workspace/src/server/index.ts",
+      "type": "file",
+      "label": "index.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/server/index.ts",
+      "metadata": {
+        "size": 3191,
+        "importsCount": 5,
+        "exportsCount": 2,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    },
+    {
+      "id": "file:/workspace/src/frontend/app.ts",
+      "type": "file",
+      "label": "app.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/frontend/app.ts",
+      "metadata": {
+        "size": 15160,
+        "importsCount": 1,
+        "exportsCount": 0,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    },
+    {
+      "id": "file:/workspace/src/config/loader.ts",
+      "type": "file",
+      "label": "loader.ts",
+      "packageId": "ts-dep",
+      "filePath": "/workspace/src/config/loader.ts",
+      "metadata": {
+        "size": 3437,
+        "importsCount": 3,
+        "exportsCount": 1,
+        "linesOfCode": 0,
+        "extension": "ts"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:file:/workspace/src/exporter/json.ts->file:/workspace/src/types/global.ts:Graph",
+      "source": "file:/workspace/src/exporter/json.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "Graph"
+    },
+    {
+      "id": "edge:file:/workspace/src/analyzer/parser.ts->file:/workspace/src/types/global.ts:PackageInfo",
+      "source": "file:/workspace/src/analyzer/parser.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "PackageInfo"
+    },
+    {
+      "id": "edge:file:/workspace/src/analyzer/parser.ts->file:/workspace/src/types/global.ts:AnalyzedFile",
+      "source": "file:/workspace/src/analyzer/parser.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "AnalyzedFile"
+    },
+    {
+      "id": "edge:file:/workspace/src/analyzer/parser.ts->file:/workspace/src/types/global.ts:ImportInfo",
+      "source": "file:/workspace/src/analyzer/parser.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "ImportInfo"
+    },
+    {
+      "id": "edge:file:/workspace/src/analyzer/parser.ts->file:/workspace/src/types/global.ts:ExportInfo",
+      "source": "file:/workspace/src/analyzer/parser.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "ExportInfo"
+    },
+    {
+      "id": "edge:file:/workspace/src/analyzer/parser.ts->file:/workspace/src/types/global.ts:TsDepConfig",
+      "source": "file:/workspace/src/analyzer/parser.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "TsDepConfig"
+    },
+    {
+      "id": "edge:file:/workspace/src/analyzer/resolver.ts->file:/workspace/src/types/global.ts:AnalyzedFile",
+      "source": "file:/workspace/src/analyzer/resolver.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "AnalyzedFile"
+    },
+    {
+      "id": "edge:file:/workspace/src/analyzer/resolver.ts->file:/workspace/src/types/global.ts:PackageInfo",
+      "source": "file:/workspace/src/analyzer/resolver.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "PackageInfo"
+    },
+    {
+      "id": "edge:file:/workspace/src/analyzer/resolver.ts->file:/workspace/src/types/global.ts:ImportInfo",
+      "source": "file:/workspace/src/analyzer/resolver.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "ImportInfo"
+    },
+    {
+      "id": "edge:file:/workspace/src/cli/index.ts->file:/workspace/src/config/loader.ts:loadConfig",
+      "source": "file:/workspace/src/cli/index.ts",
+      "target": "file:/workspace/src/config/loader.ts",
+      "type": "import",
+      "importName": "loadConfig"
+    },
+    {
+      "id": "edge:file:/workspace/src/cli/index.ts->file:/workspace/src/scanner/nx.ts:scanNxPackages",
+      "source": "file:/workspace/src/cli/index.ts",
+      "target": "file:/workspace/src/scanner/nx.ts",
+      "type": "import",
+      "importName": "scanNxPackages"
+    },
+    {
+      "id": "edge:file:/workspace/src/cli/index.ts->file:/workspace/src/analyzer/parser.ts:analyzePackages",
+      "source": "file:/workspace/src/cli/index.ts",
+      "target": "file:/workspace/src/analyzer/parser.ts",
+      "type": "import",
+      "importName": "analyzePackages"
+    },
+    {
+      "id": "edge:file:/workspace/src/cli/index.ts->file:/workspace/src/graph/builder.ts:buildGraph",
+      "source": "file:/workspace/src/cli/index.ts",
+      "target": "file:/workspace/src/graph/builder.ts",
+      "type": "import",
+      "importName": "buildGraph"
+    },
+    {
+      "id": "edge:file:/workspace/src/cli/index.ts->file:/workspace/src/exporter/json.ts:exportGraph",
+      "source": "file:/workspace/src/cli/index.ts",
+      "target": "file:/workspace/src/exporter/json.ts",
+      "type": "import",
+      "importName": "exportGraph"
+    },
+    {
+      "id": "edge:file:/workspace/src/cli/index.ts->file:/workspace/src/server/index.ts:startServer",
+      "source": "file:/workspace/src/cli/index.ts",
+      "target": "file:/workspace/src/server/index.ts",
+      "type": "import",
+      "importName": "startServer"
+    },
+    {
+      "id": "edge:file:/workspace/src/cli/index.ts->file:/workspace/src/types/global.ts:TsDepConfig",
+      "source": "file:/workspace/src/cli/index.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "TsDepConfig"
+    },
+    {
+      "id": "edge:file:/workspace/src/scanner/nx.ts->file:/workspace/src/types/global.ts:TsDepConfig",
+      "source": "file:/workspace/src/scanner/nx.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "TsDepConfig"
+    },
+    {
+      "id": "edge:file:/workspace/src/scanner/nx.ts->file:/workspace/src/types/global.ts:PackageInfo",
+      "source": "file:/workspace/src/scanner/nx.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "PackageInfo"
+    },
+    {
+      "id": "edge:file:/workspace/src/scanner/nx.ts->file:/workspace/src/types/global.ts:ScannerResult",
+      "source": "file:/workspace/src/scanner/nx.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "ScannerResult"
+    },
+    {
+      "id": "edge:file:/workspace/src/scanner/nx.ts->file:/workspace/src/types/global.ts:SkippedPath",
+      "source": "file:/workspace/src/scanner/nx.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "SkippedPath"
+    },
+    {
+      "id": "edge:file:/workspace/src/server/index.ts->file:/workspace/src/types/global.ts:Graph",
+      "source": "file:/workspace/src/server/index.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "Graph"
+    },
+    {
+      "id": "edge:file:/workspace/src/server/index.ts->file:/workspace/src/exporter/json.ts:graphToJson",
+      "source": "file:/workspace/src/server/index.ts",
+      "target": "file:/workspace/src/exporter/json.ts",
+      "type": "import",
+      "importName": "graphToJson"
+    },
+    {
+      "id": "edge:file:/workspace/src/frontend/app.ts->file:/workspace/src/types/global.ts:Graph",
+      "source": "file:/workspace/src/frontend/app.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "Graph"
+    },
+    {
+      "id": "edge:file:/workspace/src/frontend/app.ts->file:/workspace/src/types/global.ts:Node",
+      "source": "file:/workspace/src/frontend/app.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "Node"
+    },
+    {
+      "id": "edge:file:/workspace/src/frontend/app.ts->file:/workspace/src/types/global.ts:Edge",
+      "source": "file:/workspace/src/frontend/app.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "Edge"
+    },
+    {
+      "id": "edge:file:/workspace/src/frontend/app.ts->file:/workspace/src/types/global.ts:NodeType",
+      "source": "file:/workspace/src/frontend/app.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "NodeType"
+    },
+    {
+      "id": "edge:file:/workspace/src/frontend/app.ts->file:/workspace/src/types/global.ts:FilterState",
+      "source": "file:/workspace/src/frontend/app.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "FilterState"
+    },
+    {
+      "id": "edge:file:/workspace/src/config/loader.ts->file:/workspace/src/types/global.ts:DEFAULT_CONFIG",
+      "source": "file:/workspace/src/config/loader.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "DEFAULT_CONFIG"
+    },
+    {
+      "id": "edge:file:/workspace/src/config/loader.ts->file:/workspace/src/types/global.ts:TsDepConfig",
+      "source": "file:/workspace/src/config/loader.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "TsDepConfig"
+    },
+    {
+      "id": "edge:file:/workspace/src/config/loader.ts->file:/workspace/src/types/global.ts:ConfigValidationResult",
+      "source": "file:/workspace/src/config/loader.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "ConfigValidationResult"
+    },
+    {
+      "id": "edge:file:/workspace/src/config/loader.ts->file:/workspace/src/types/global.ts:ConfigValidationError",
+      "source": "file:/workspace/src/config/loader.ts",
+      "target": "file:/workspace/src/types/global.ts",
+      "type": "import",
+      "importName": "ConfigValidationError"
+    }
+  ],
+  "metadata": {
+    "createdAt": "2026-05-06T12:05:13.391Z",
+    "totalFiles": 9,
+    "totalPackages": 1,
+    "totalDependencies": 31,
+    "scanDurationMs": 1
+  }
+}

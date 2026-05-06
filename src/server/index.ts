@@ -16,7 +16,7 @@ const FRONTEND_DIR = join(dirname(import.meta.path), '..', 'frontend');
 /**
  * Запускает HTTP сервер для обслуживания веб-интерфейса
  */
-export async function startServer(port: number, graph: Graph): Promise<any> {
+export async function startServer(port: number, graph: Graph, openBrowser = true): Promise<any> {
   const jsonContent = graphToJson(graph);
   
   const server = Bun.serve({
@@ -59,12 +59,14 @@ export async function startServer(port: number, graph: Graph): Promise<any> {
   
   console.log(`[INFO] Server running at http://localhost:${port}`);
   
-  // Открываем браузер
-  setTimeout(() => {
-    open(`http://localhost:${port}`).catch(err => {
-      console.log(`[WARN] Failed to open browser: ${err.message}`);
-    });
-  }, 500);
+  // Открываем браузер только если флаг установлен
+  if (openBrowser) {
+    setTimeout(() => {
+      open(`http://localhost:${port}`).catch(err => {
+        console.log(`[WARN] Failed to open browser: ${err.message}`);
+      });
+    }, 500);
+  }
   
   return server;
 }

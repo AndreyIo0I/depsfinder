@@ -3,7 +3,7 @@
 ## 📋 Задачи (Tasks)
 
 ### T001: Настройка проекта и зависимостей
-**Status**: TODO  
+**Status**: DONE ✅  
 **Related Spec**: proposal.md (Стек технологий)  
 **Критерий завершения**: 
 - `bun init` выполнен
@@ -19,7 +19,7 @@
 ---
 
 ### T002: Создание спецификаций OpenSpec
-**Status**: IN PROGRESS  
+**Status**: DONE ✅  
 **Related Spec**: Все spec файлы  
 **Критерий завершения**: 
 - Созданы все файлы в `openspec/specs/` и `openspec/changes/ts-dep-implementation/`
@@ -32,9 +32,9 @@
 - [x] Создать `specs/types.md`
 - [x] Создать `specs/architecture.md`
 - [x] Создать `specs/ui.md`
-- [ ] Создать `tasks.md` (этот файл)
-- [ ] Вывести спеки на утверждение
-- [ ] Получить подтверждение
+- [x] Создать `tasks.md` (этот файл)
+- [x] Вывести спеки на утверждение
+- [x] Получить подтверждение
 
 ---
 

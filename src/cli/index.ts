@@ -71,7 +71,7 @@ program
       
       // Start server
       console.log(`[INFO] Starting HTTP server on port ${config.port}...`);
-      await startServer(config.port, graph);
+      await startServer(config.port, graph, config.openBrowser);
       
       if (config.openBrowser) {
         console.log('[INFO] Opening browser...');
