@@ -174,3 +174,7 @@ cat graph.json | jq '.edges | length'  # Количество рёбер
 - [Bun Documentation](https://bun.sh/docs)
 - [Cytoscape.js Documentation](https://js.cytoscape.org/)
 - [Commander.js Documentation](https://github.com/tj/commander.js)
+
+## ⚠️ Важные замечания
+
+- **Не изменяйте файл `.gitignore` без явной необходимости** - это может привести к попаданию лишних файлов в репозиторий

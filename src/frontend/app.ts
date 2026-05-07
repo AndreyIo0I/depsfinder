@@ -18,6 +18,10 @@ let filterState: FilterState = {
   showPackageNodes: true,
   selectedPackages: []
 };
+let hiddenNodes: Set<string> = new Set();
+let hiddenEdges: Set<string> = new Set();
+let selectedNodeId: string | null = null;
+let collapsedPackages: Set<string> = new Set();
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', async () => {
@@ -78,26 +82,30 @@ function initializeCytoscape(): void {
     },
     
     style: [
-      // Package nodes
+      // Package nodes (compound nodes/frames)
       {
         selector: 'node[type="package"]',
         style: {
           'background-color': getNodeColor,
           'label': 'data(label)',
-          'text-valign': 'center',
+          'text-valign': 'top',
           'text-halign': 'center',
           'color': '#ffffff',
           'text-outline-width': 2,
           'text-outline-color': '#000000',
-          'width': 80,
-          'height': 80,
-          'shape': 'ellipse',
-          'font-size': '12px',
-          'font-weight': 'bold'
+          'width': 200,
+          'height': 150,
+          'shape': 'round-rectangle',
+          'font-size': '14px',
+          'font-weight': 'bold',
+          'border-width': 3,
+          'border-color': '#333',
+          'padding': 30,
+          'compound-sizing-wrt-labels': false
         }
       },
       
-      // File nodes
+      // File nodes inside packages
       {
         selector: 'node[type="file"]',
         style: {
@@ -115,7 +123,33 @@ function initializeCytoscape(): void {
         }
       },
       
-      // Import edges
+      // Import edges - outgoing (source to target)
+      {
+        selector: 'edge[type="import"][direction="outgoing"]',
+        style: {
+          'line-color': '#0d6efd',
+          'target-arrow-color': '#0d6efd',
+          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier',
+          'width': 2,
+          'arrow-scale': 1.5
+        }
+      },
+      
+      // Import edges - incoming (target from source)
+      {
+        selector: 'edge[type="import"][direction="incoming"]',
+        style: {
+          'line-color': '#dc3545',
+          'target-arrow-color': '#dc3545',
+          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier',
+          'width': 2,
+          'arrow-scale': 1.5
+        }
+      },
+      
+      // Default import edges (no direction specified)
       {
         selector: 'edge[type="import"]',
         style: {
@@ -158,7 +192,11 @@ function initializeCytoscape(): void {
     
     wheelSensitivity: 0.3,
     boxSelectionEnabled: true,
-    selectionType: 'single'
+    selectionType: 'single',
+    layout: {
+      name: 'preset',
+      animate: false
+    }
   });
 
   // Setup event handlers
@@ -172,20 +210,36 @@ function initializeCytoscape(): void {
 }
 
 /**
- * Converts graph data to Cytoscape elements format
+ * Converts graph data to Cytoscape elements format with compound nodes for packages
  */
 function convertToCytoscapeElements(graph: Graph): any[] {
   const elements: any[] = [];
   
-  // Add nodes
-  for (const node of graph.nodes) {
+  // First, add package nodes (these will be compound nodes/frames)
+  const packageNodes = graph.nodes.filter(n => n.type === 'package');
+  for (const node of packageNodes) {
     elements.push({
       data: {
         id: node.id,
         label: node.label,
         type: node.type,
         packageId: node.packageId,
-        filePath: node.filePath
+        parent: null // Package nodes have no parent
+      }
+    });
+  }
+  
+  // Then, add file nodes inside their package parent
+  const fileNodes = graph.nodes.filter(n => n.type === 'file');
+  for (const node of fileNodes) {
+    elements.push({
+      data: {
+        id: node.id,
+        label: node.label,
+        type: node.type,
+        packageId: node.packageId,
+        filePath: node.filePath,
+        parent: node.packageId // File nodes are children of their package
       }
     });
   }
@@ -197,7 +251,8 @@ function convertToCytoscapeElements(graph: Graph): any[] {
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: edge.type
+        type: edge.type,
+        direction: 'outgoing' // Default direction from source to target
       }
     });
   }
@@ -236,7 +291,9 @@ function setupCytoscapeEvents(): void {
   // Node click
   cy.on('tap', 'node', (event: any) => {
     const node = event.target;
+    selectedNodeId = node.data('id');
     showNodeDetails(node);
+    highlightConnectedEdges(node);
     
     // Dispatch custom event
     document.dispatchEvent(new CustomEvent('node-selected', {
@@ -253,8 +310,22 @@ function setupCytoscapeEvents(): void {
     console.log('Edge selected:', edge.data());
   });
   
-  // Double click node - open file
-  cy.on('dblclick', 'node', (event: any) => {
+  // Double click package node - collapse/expand
+  cy.on('dblclick', 'node[type="package"]', (event: any) => {
+    const node = event.target;
+    const packageId = node.data('id');
+    
+    if (collapsedPackages.has(packageId)) {
+      // Expand the package
+      expandPackage(packageId);
+    } else {
+      // Collapse the package
+      collapsePackage(packageId);
+    }
+  });
+  
+  // Double click file node - open file
+  cy.on('dblclick', 'node[type="file"]', (event: any) => {
     const node = event.target;
     const filePath = node.data('filePath');
     
@@ -267,7 +338,32 @@ function setupCytoscapeEvents(): void {
   // Background click - clear selection
   cy.on('tap', (event: any) => {
     if (event.target === cy) {
+      selectedNodeId = null;
       hideNodeDetails();
+      clearEdgeHighlights();
+    }
+  });
+  
+  // Delete key - hide selected nodes
+  document.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (event.key === 'Delete') {
+      const selectedNodes = cy?.elements(':selected').nodes();
+      if (selectedNodes && selectedNodes.length > 0) {
+        selectedNodes.forEach((node: any) => {
+          const nodeId = node.data('id');
+          hiddenNodes.add(nodeId);
+          node.style('display', 'none');
+          
+          // Hide connected edges
+          const connectedEdges = node.connectedEdges();
+          connectedEdges.forEach((edge: any) => {
+            const edgeId = edge.data('id');
+            hiddenEdges.add(edgeId);
+            edge.style('display', 'none');
+          });
+        });
+        updateRestoreButton();
+      }
     }
   });
 }
@@ -306,6 +402,63 @@ function hideNodeDetails(): void {
 }
 
 /**
+ * Highlights connected edges for the selected node
+ * Outgoing edges (from selected node) - blue
+ * Incoming edges (to selected node) - red
+ */
+function highlightConnectedEdges(node: any): void {
+  if (!cy) return;
+  
+  // First, reset all edges to default style
+  cy.edges().forEach((edge: any) => {
+    edge.style({
+      'line-color': '#6c757d',
+      'target-arrow-color': '#6c757d',
+      'width': 2,
+      'opacity': 0.3
+    });
+  });
+  
+  // Get outgoing edges (edges where this node is the source)
+  const outgoingEdges = node.outgoers('edge');
+  outgoingEdges.forEach((edge: any) => {
+    edge.style({
+      'line-color': '#0d6efd',
+      'target-arrow-color': '#0d6efd',
+      'width': 3,
+      'opacity': 1
+    });
+  });
+  
+  // Get incoming edges (edges where this node is the target)
+  const incomingEdges = node.incomers('edge');
+  incomingEdges.forEach((edge: any) => {
+    edge.style({
+      'line-color': '#dc3545',
+      'target-arrow-color': '#dc3545',
+      'width': 3,
+      'opacity': 1
+    });
+  });
+}
+
+/**
+ * Clears edge highlights and resets to default
+ */
+function clearEdgeHighlights(): void {
+  if (!cy) return;
+  
+  cy.edges().forEach((edge: any) => {
+    edge.style({
+      'line-color': '#6c757d',
+      'target-arrow-color': '#6c757d',
+      'width': 2,
+      'opacity': 1
+    });
+  });
+}
+
+/**
  * Updates statistics display
  */
 function updateStats(): void {
@@ -314,7 +467,15 @@ function updateStats(): void {
   
   const nodeCount = graphData.nodes.length;
   const edgeCount = graphData.edges.length;
-  const packageCount = graphData.metadata.totalPackages;
+  
+  // Count unique packages from nodes
+  const packages = new Set<string>();
+  for (const node of graphData.nodes) {
+    if (node.package) {
+      packages.add(node.package);
+    }
+  }
+  const packageCount = packages.size;
   
   statsElement.textContent = `${nodeCount} nodes, ${edgeCount} edges, ${packageCount} packages`;
 }
@@ -579,5 +740,110 @@ function showError(message: string): void {
       link.href = pngBase64;
       link.click();
     }
+  },
+  restoreHiddenNodes: () => {
+    hiddenNodes.clear();
+    hiddenEdges.clear();
+    if (cy) {
+      cy.elements().style('display', 'element');
+    }
+    updateRestoreButton();
   }
 };
+
+/**
+ * Updates the restore button visibility based on hidden nodes
+ */
+function updateRestoreButton(): void {
+  const restoreBtn = document.getElementById('restoreBtn');
+  if (!restoreBtn) return;
+  
+  if (hiddenNodes.size > 0) {
+    restoreBtn.classList.remove('hidden');
+  } else {
+    restoreBtn.classList.add('hidden');
+  }
+}
+
+/**
+ * Restores all hidden nodes and edges
+ */
+function restoreHiddenNodes(): void {
+  hiddenNodes.clear();
+  hiddenEdges.clear();
+  if (cy) {
+    cy.elements().style('display', 'element');
+  }
+  updateRestoreButton();
+}
+
+/**
+ * Collapses a package node - hides child file nodes and shows package as a single node
+ * Preserves all incoming and outgoing edges at the package level
+ */
+function collapsePackage(packageId: string): void {
+  if (!cy) return;
+  
+  collapsedPackages.add(packageId);
+  
+  // Get the package node
+  const packageNode = cy.getElementById(packageId);
+  
+  // Get all file nodes inside this package
+  const childNodes = cy.nodes().filter((node: any) => node.data('parent') === packageId);
+  
+  // Hide all child file nodes
+  childNodes.forEach((node: any) => {
+    node.style('display', 'none');
+  });
+  
+  // Update package node style to show it's collapsed
+  packageNode.style({
+    'background-opacity': 0.5,
+    'border-style': 'dashed'
+  });
+  
+  // Reposition package node to average position of its children
+  if (childNodes.length > 0) {
+    let sumX = 0, sumY = 0, count = 0;
+    childNodes.forEach((node: any) => {
+      const pos = node.position();
+      sumX += pos.x;
+      sumY += pos.y;
+      count++;
+    });
+    
+    if (count > 0) {
+      packageNode.position({
+        x: sumX / count,
+        y: sumY / count
+      });
+    }
+  }
+}
+
+/**
+ * Expands a package node - shows all child file nodes
+ */
+function expandPackage(packageId: string): void {
+  if (!cy) return;
+  
+  collapsedPackages.delete(packageId);
+  
+  // Get the package node
+  const packageNode = cy.getElementById(packageId);
+  
+  // Get all file nodes inside this package
+  const childNodes = cy.nodes().filter((node: any) => node.data('parent') === packageId);
+  
+  // Show all child file nodes
+  childNodes.forEach((node: any) => {
+    node.style('display', 'element');
+  });
+  
+  // Reset package node style
+  packageNode.style({
+    'background-opacity': 1,
+    'border-style': 'solid'
+  });
+}

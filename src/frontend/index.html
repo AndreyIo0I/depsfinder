@@ -12,6 +12,7 @@
     <h1>TS Dependency Graph</h1>
     <div class="header-controls">
       <button id="filtersBtn" class="btn">Filters</button>
+      <button id="restoreBtn" class="btn hidden">Restore Hidden</button>
       <div id="stats" class="stats">Loading...</div>
       <button id="refreshBtn" class="btn">Refresh</button>
       <button id="helpBtn" class="btn">Help</button>
@@ -98,6 +99,7 @@
         <li><kbd>Space</kbd> - Toggle filters sidebar</li>
         <li><kbd>R</kbd> - Refresh graph</li>
         <li><kbd>H</kbd> - Show help</li>
+        <li><kbd>Delete</kbd> - Hide selected nodes (press Restore Hidden to show again)</li>
       </ul>
       <h3>Mouse Controls</h3>
       <ul>
@@ -110,6 +112,15 @@
       <button id="closeHelpBtn" class="btn">Close</button>
     </div>
   </div>
+
+  <!-- Restore Button Event -->
+  <script>
+    document.getElementById('restoreBtn')?.addEventListener('click', () => {
+      if (window.tsdep && window.tsdep.restoreHiddenNodes) {
+        window.tsdep.restoreHiddenNodes();
+      }
+    });
+  </script>
 
   <script type="module" src="/app.bundle.js"></script>
 </body>
