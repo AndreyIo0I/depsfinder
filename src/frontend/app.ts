@@ -79,6 +79,7 @@ function initializeCytoscape(): void {
       coolingFactor: 0.95,
       minTemp: 1.0,
       randomize: false
+      // Compound layout is enabled automatically when nodes have parent relationships
     },
     
     style: [
@@ -93,15 +94,25 @@ function initializeCytoscape(): void {
           'color': '#ffffff',
           'text-outline-width': 2,
           'text-outline-color': '#000000',
-          'width': 200,
-          'height': 150,
+          'width': (node: any) => {
+            // Check if package is collapsed
+            const packageId = node.data('id');
+            return collapsedPackages.has(packageId) ? 50 : 200;
+          },
+          'height': (node: any) => {
+            const packageId = node.data('id');
+            return collapsedPackages.has(packageId) ? 50 : 150;
+          },
           'shape': 'round-rectangle',
-          'font-size': '14px',
+          'font-size': (node: any) => {
+            const packageId = node.data('id');
+            return collapsedPackages.has(packageId) ? '10px' : '14px';
+          },
           'font-weight': 'bold',
           'border-width': 3,
           'border-color': '#333',
-          'padding': 30,
-          'compound-sizing-wrt-labels': false
+          'padding': '30px',
+          'compound-sizing-wrt-labels': 'exclude' as any
         }
       },
       
@@ -192,11 +203,7 @@ function initializeCytoscape(): void {
     
     wheelSensitivity: 0.3,
     boxSelectionEnabled: true,
-    selectionType: 'single',
-    layout: {
-      name: 'preset',
-      animate: false
-    }
+    selectionType: 'single'
   });
 
   // Setup event handlers
@@ -239,7 +246,7 @@ function convertToCytoscapeElements(graph: Graph): any[] {
         type: node.type,
         packageId: node.packageId,
         filePath: node.filePath,
-        parent: node.packageId // File nodes are children of their package
+        parent: node.packageId // File nodes are children of their package (use packageId directly, not pkg: prefix)
       }
     });
   }
@@ -322,6 +329,36 @@ function setupCytoscapeEvents(): void {
       // Collapse the package
       collapsePackage(packageId);
     }
+  });
+  
+  // Handle package node dragging - move child nodes with parent
+  let isDraggingPackage = false;
+  let draggedPackageId: string | null = null;
+  
+  cy.on('grab', 'node[type="package"]', (event: any) => {
+    isDraggingPackage = true;
+    draggedPackageId = event.target.data('id');
+  });
+  
+  cy.on('drag', 'node[type="package"]', (event: any) => {
+    if (!isDraggingPackage || !draggedPackageId) return;
+    
+    const packageNode = event.target;
+    const packagePosition = packageNode.position();
+    
+    // Get all child file nodes and update their positions relative to the package
+    const childNodes = cy.nodes().filter((node: any) => {
+      const parent = node.data('parent');
+      return parent && parent === draggedPackageId;
+    });
+    
+    // When package is dragged, children automatically move with it in compound nodes
+    // This is handled by Cytoscape's compound node system
+  });
+  
+  cy.on('free', 'node[type="package"]', (event: any) => {
+    isDraggingPackage = false;
+    draggedPackageId = null;
   });
   
   // Double click file node - open file
@@ -471,8 +508,8 @@ function updateStats(): void {
   // Count unique packages from nodes
   const packages = new Set<string>();
   for (const node of graphData.nodes) {
-    if (node.package) {
-      packages.add(node.package);
+    if (node.packageId) {
+      packages.add(node.packageId);
     }
   }
   const packageCount = packages.size;
@@ -789,37 +826,25 @@ function collapsePackage(packageId: string): void {
   // Get the package node
   const packageNode = cy.getElementById(packageId);
   
-  // Get all file nodes inside this package
-  const childNodes = cy.nodes().filter((node: any) => node.data('parent') === packageId);
+  // Get all file nodes inside this package (children of this compound node)
+  const childNodes = cy.nodes().filter((node: any) => {
+    const parent = node.data('parent');
+    return parent && parent === packageId;
+  });
   
   // Hide all child file nodes
   childNodes.forEach((node: any) => {
     node.style('display', 'none');
   });
   
-  // Update package node style to show it's collapsed
+  // Update package node style to show it's collapsed (smaller size)
   packageNode.style({
+    'width': 50,
+    'height': 50,
+    'font-size': '10px',
     'background-opacity': 0.5,
     'border-style': 'dashed'
   });
-  
-  // Reposition package node to average position of its children
-  if (childNodes.length > 0) {
-    let sumX = 0, sumY = 0, count = 0;
-    childNodes.forEach((node: any) => {
-      const pos = node.position();
-      sumX += pos.x;
-      sumY += pos.y;
-      count++;
-    });
-    
-    if (count > 0) {
-      packageNode.position({
-        x: sumX / count,
-        y: sumY / count
-      });
-    }
-  }
 }
 
 /**
@@ -833,16 +858,22 @@ function expandPackage(packageId: string): void {
   // Get the package node
   const packageNode = cy.getElementById(packageId);
   
-  // Get all file nodes inside this package
-  const childNodes = cy.nodes().filter((node: any) => node.data('parent') === packageId);
+  // Get all file nodes inside this package (children of this compound node)
+  const childNodes = cy.nodes().filter((node: any) => {
+    const parent = node.data('parent');
+    return parent && parent === packageId;
+  });
   
   // Show all child file nodes
   childNodes.forEach((node: any) => {
     node.style('display', 'element');
   });
   
-  // Reset package node style
+  // Reset package node style to original size
   packageNode.style({
+    'width': 200,
+    'height': 150,
+    'font-size': '14px',
     'background-opacity': 1,
     'border-style': 'solid'
   });
