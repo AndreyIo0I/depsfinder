@@ -137,77 +137,123 @@ const cyOptions: cytoscape.CoreOptions = {
   layout: {
     name: 'cose',
     animate: true,
-    animationDuration: 1000,
-    randomize: false,
-    componentSpacing: 100,
-    nodeOverlap: 20,
+    animationDuration: 500,
+    fit: true,
     padding: 30,
+    nodeDimensionsIncludeLabels: true,
+    spacingFactor: 1.2,
+    componentSpacing: 100,
+    nodeRepulsion: 400000,
+    edgeElasticity: 100,
+    nestingFactor: 5,
+    gravity: 80,
+    numIter: 1000,
+    initialTemp: 200,
+    coolingFactor: 0.95,
+    minTemp: 1.0,
+    randomize: false
+    // Compound layout is enabled automatically when nodes have parent relationships
   },
   
   style: [
-    // Стили узлов
+    // Package nodes (compound nodes/frames)
     {
-      selector: 'node[type="file"]',
+      selector: 'node[type="package"]',
       style: {
-        'background-color': '#3498db',
-        'label': 'data(name)',
-        'color': '#2c3e50',
-        'font-size': '12px',
-        'width': '40px',
-        'height': '40px',
-      },
-    },
-    {
-      selector: 'node[type="barrel"]',
-      style: {
-        'background-color': '#9b59b6',
-        'shape': 'square',
-      },
-    },
-    {
-      selector: 'node:selected',
-      style: {
-        'border-color': '#e74c3c',
-        'border-width': '3px',
-        'background-color': '#e67e22',
-      },
-    },
-    {
-      selector: 'node[hiddenByFilter]',
-      style: {
-        'display': 'none',
+        'background-color': getNodeColor,
+        'label': 'data(label)',
+        'text-valign': 'top',
+        'text-halign': 'center',
+        'color': '#ffffff',
+        'text-outline-width': 2,
+        'text-outline-color': '#000000',
+        'width': 200,  // Развёрнутое состояние
+        'height': 150,
+        'shape': 'round-rectangle',
+        'font-size': '14px',
+        'font-weight': 'bold',
+        'border-width': 3,
+        'border-color': '#333',
+        'padding': '30px',
+        'compound-sizing-wrt-labels': 'exclude'
       },
     },
     
-    // Стили рёбер
+    // File nodes inside packages
     {
-      selector: 'edge',
+      selector: 'node[type="file"]',
       style: {
-        'line-color': '#bdc3c7',
+        'background-color': getNodeColor,
+        'label': 'data(label)',
+        'text-valign': 'top',
+        'text-halign': 'center',
+        'color': '#212529',
+        'text-outline-width': 1,
+        'text-outline-color': '#ffffff',
+        'width': 40,
+        'height': 40,
+        'shape': 'rectangle',
+        'font-size': '10px'
+      },
+    },
+    
+    // Import edges - outgoing (source to target)
+    {
+      selector: 'edge[type="import"][direction="outgoing"]',
+      style: {
+        'line-color': '#0d6efd',
+        'target-arrow-color': '#0d6efd',
+        'target-arrow-shape': 'triangle',
+        'curve-style': 'bezier',
         'width': 2,
-        'opacity': 0.6,
-      },
+        'arrow-scale': 1.5
+      }
     },
+    
+    // Import edges - incoming (target from source)
     {
-      selector: 'edge[type="import"]',
+      selector: 'edge[type="import"][direction="incoming"]',
       style: {
-        'line-style': 'solid',
-      },
+        'line-color': '#dc3545',
+        'target-arrow-color': '#dc3545',
+        'target-arrow-shape': 'triangle',
+        'curve-style': 'bezier',
+        'width': 2,
+        'arrow-scale': 1.5
+      }
     },
+    
+    // Selected elements
     {
-      selector: 'edge[type="export"]',
+      selector: 'node:selected',
       style: {
-        'line-style': 'dashed',
-      },
+        'border-width': 4,
+        'border-color': '#ffc107',
+        'background-opacity': 0.8
+      }
     },
+    
     {
       selector: 'edge:selected',
       style: {
-        'line-color': '#e74c3c',
         'width': 4,
-      },
+        'line-color': '#ffc107',
+        'target-arrow-color': '#ffc107'
+      }
     },
+    
+    // Hover effect
+    {
+      selector: 'node:hover',
+      style: {
+        'background-opacity': 0.7
+      }
+    }
   ],
+  
+  wheelSensitivity: 0.3,
+  boxSelectionEnabled: true,
+  selectionType: 'single'
 };
 ```
 
@@ -235,6 +281,15 @@ const cyOptions: cytoscape.CoreOptions = {
    - "Expand/Collapse" (для пакетов)
    - "Isolate Node" (показать только этот узел и связи)
    - "Open in Editor" (file:// ссылка)
+
+6. **Double-click по пакету**:
+   - Сворачивание/разворачивание пакета
+   - При сворачивании: пакет уменьшается до ~50x50px, узлы внутри скрываются
+   - При разворачивании: пакет возвращается к размеру 200x150px, узлы показываются
+
+7. **Перетаскивание пакета**:
+   - При перемещении пакета все дочерние узлы автоматически перемещаются вместе с ним
+   - Реализовано через compound nodes Cytoscape.js
 
 ### 4. Detail Panel (при клике на узел)
 
